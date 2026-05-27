@@ -1,0 +1,33 @@
+name: ota_search_pipeline
+version: 1.0.0
+config-version: 2
+
+profile: ota_search
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+target-path: target
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  ota_search_pipeline:
+    bronze:
+      +materialized: view
+      +schema: bronze
+    silver:
+      +materialized: incremental
+      +schema: silver
+      +unique_key: dedup_key
+      +incremental_strategy: merge
+    gold:
+      +materialized: table
+      +schema: gold
+
+vars:
+  bronze_source_dataset: ota_bronze
+  bronze_source_table: raw_ota_searches

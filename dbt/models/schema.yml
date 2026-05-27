@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: ota_bronze
+    database: "{{ env_var('GCP_PROJECT_ID', 'lighthouse-dev') }}"
+    schema: ota_bronze
+    tables:
+      - name: raw_ota_searches
+        description: Raw OTA search events landed by Dataflow
+        columns:
+          - name: event_id
+            description: Unique event identifier assigned at ingestion
+          - name: dedup_key
+            description: Hash for deduplication of retried POSTs
+          - name: ingestion_time
+            description: Timestamp when event was ingested
+          - name: payload
+            description: Full JSON payload as string
+
+models:
+  - name: stg_ota_searches
+    description: Parsed bronze staging view for OTA search events
+
+  - name: searches_enriched
+    description: Silver layer with city resolution, country normalization, and dedup
+    columns:
+      - name: dedup_key
+        tests:
+          - unique
+          - not_null
+      - name: city
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                where: "hotel_id is not null"
+      - name: los_bucket
+        tests:
+          - accepted_values:
+              values: ['1', '2', '3', '4-7', '8-14']
+      - name: length_of_stay
+        tests:
+          - not_null
+
+  - name: gold_arrival_date_popularity
+    description: Search count by city and arrival date for Market Insight chart
+
+  - name: gold_country_trends
+    description: Top countries by search share with avg LOS for Market Insight chart
+
+  - name: gold_los_distribution
+    description: Length-of-stay distribution by city for Market Insight chart

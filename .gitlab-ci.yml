@@ -1,0 +1,85 @@
+# Infrastructure provisioning strategy
+#
+# State management:
+#   - Remote backend: GCS bucket per environment with versioning
+#   - State prefix: ota-search/{env}
+#   - Native GCS locking prevents concurrent applies
+#
+# Module usage:
+#   - pubsub/    — topic, subscription, DLQ, IAM
+#   - bigquery/  — datasets, tables, partitioning
+#   - cloudrun/  — ingestion API service
+#
+# Applying changes:
+#   - terraform plan on every PR (read-only, GitLab CI)
+#   - terraform apply on merge to main (dev, auto)
+#   - terraform apply for prod (manual approval gate)
+#
+# Environments: dev, staging, prod — each with own tfvars and state prefix
+
+stages:
+  - validate
+  - test
+  - plan
+  - deploy
+
+variables:
+  TF_ROOT: infra/environments/dev
+
+.terraform_validate:
+  stage: validate
+  image: hashicorp/terraform:1.5
+  script:
+    - cd $TF_ROOT
+    - terraform fmt -check -recursive
+    - terraform init -backend=false
+    - terraform validate
+
+.pytest:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install -r requirements.txt
+    - pytest validation/ tests/ -v
+
+.dbt_test:
+  stage: test
+  image: ghcr.io/dbt-labs/dbt-bigquery:1.7.0
+  script:
+    - cd dbt
+    - dbt deps
+    - dbt parse
+
+.terraform_plan:
+  stage: plan
+  image: hashicorp/terraform:1.5
+  script:
+    - cd $TF_ROOT
+    - terraform init
+    - terraform plan -out=plan.tfplan
+  artifacts:
+    paths:
+      - $TF_ROOT/plan.tfplan
+
+terraform_validate:
+  extends: .terraform_validate
+
+pytest:
+  extends: .pytest
+
+dbt_parse:
+  extends: .dbt_test
+
+terraform_plan:
+  extends: .terraform_plan
+
+terraform_apply_dev:
+  stage: deploy
+  image: hashicorp/terraform:1.5
+  script:
+    - cd $TF_ROOT
+    - terraform init
+    - terraform apply -auto-approve plan.tfplan
+  when: manual
+  only:
+    - main

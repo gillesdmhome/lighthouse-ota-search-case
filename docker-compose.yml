@@ -1,0 +1,31 @@
+services:
+  ingestion-api:
+    build:
+      context: .
+      dockerfile: services/ingestion_api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      API_KEY: dev-api-key-change-me
+      DATA_DIR: /app/data
+      DUCKDB_PATH: /app/data/warehouse.duckdb
+      PARTNER_ID: ota-partner-1
+    volumes:
+      - ota-data:/app/data
+
+  market-insight-api:
+    build:
+      context: .
+      dockerfile: services/market_insight_api/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      DATA_DIR: /app/data
+      DUCKDB_PATH: /app/data/warehouse.duckdb
+    volumes:
+      - ota-data:/app/data
+    depends_on:
+      - ingestion-api
+
+volumes:
+  ota-data:

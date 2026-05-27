@@ -1,0 +1,17 @@
+checks for searches_enriched:
+  - row_count > 0
+  - missing_count(city) < 1:
+      name: City should be resolved for almost all rows
+  - duplicate_count(dedup_key) = 0:
+      name: No duplicate dedup keys in silver
+
+checks for gold_country_trends:
+  - row_count > 0
+  - invalid_count(pct_of_total) = 0:
+      name: Percentages must be valid
+
+checks for gold_los_distribution:
+  - row_count > 0
+  - failed rows:
+      fail condition: los_bucket not in ('1', '2', '3', '4-7', '8-14')
+      name: LOS buckets must match Market Insight categories

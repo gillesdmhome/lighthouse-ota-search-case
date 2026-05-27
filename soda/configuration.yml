@@ -1,0 +1,19 @@
+data_source ota_duckdb:
+  type: duckdb
+  connection:
+    database: data/warehouse.duckdb
+  schema: main
+
+data_source ota_bigquery:
+  type: bigquery
+  connection:
+    account_info_json: ${GCP_SERVICE_ACCOUNT_JSON}
+    auth_timeout: 30
+    project_id: ${GCP_PROJECT_ID}
+    dataset: ota_silver
+  schema: ota_silver
+
+soda_cloud:
+  host: cloud.soda.io
+  api_key_id: ${SODA_API_KEY_ID}
+  api_key_secret: ${SODA_API_KEY_SECRET}

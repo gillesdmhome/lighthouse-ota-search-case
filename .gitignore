@@ -1,0 +1,12 @@
+data/
+pdf_extract/
+*.duckdb
+*.duckdb.wal
+__pycache__/
+.pytest_cache/
+.env
+*.tfplan
+.terraform/
+target/
+dbt_packages/
+logs/
