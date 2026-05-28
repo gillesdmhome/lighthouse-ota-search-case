@@ -65,6 +65,8 @@ Full list: `docs/assumptions.md`
 
 ## Slide 5: Architecture Overview
 
+![Pipeline schematic](assets/14_pipeline_schematic.png)
+
 ![Architecture overview](assets/01_architecture_overview.png)
 
 **Lighthouse stack:** GCP, Pub/Sub, BigQuery, Dataflow, Airflow, dbt, Soda, Atlan, Terraform, GitLab CI

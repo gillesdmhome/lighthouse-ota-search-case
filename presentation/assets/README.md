@@ -26,5 +26,6 @@ python scripts/generate_presentation_assets.py
 | `11_throughput_volume.png` | 3 | 100 req/s volume infographic |
 | `12_sample_json_payload.png` | 6 | Inbound JSON payload example |
 | `13_orchestration_dag.png` | 12 | Airflow DAG task flow |
+| `14_pipeline_schematic.png` | 5 | **Full pipeline schematic** (swim lanes, medallion, ops) |
 
 Import into Google Slides or PowerPoint from [`slides.md`](../slides.md).

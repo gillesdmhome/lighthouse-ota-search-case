@@ -383,6 +383,156 @@ def diagram_orchestration_dag() -> None:
     _save(fig, "13_orchestration_dag.png")
 
 
+def _draw_box(ax, x, y, w, h, text, fc, ec, fontsize=8, bold=True):
+    box = FancyBboxPatch(
+        (x, y), w, h, boxstyle="round,pad=0.04,rounding_size=0.08",
+        facecolor=fc, edgecolor=ec, linewidth=1.8,
+    )
+    ax.add_patch(box)
+    weight = "bold" if bold else "normal"
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fontsize, fontweight=weight, color=DARK)
+    return box
+
+
+def _draw_arrow(ax, x1, y1, x2, y2, color=GREY, style="-", lw=1.8):
+    ax.annotate(
+        "", xy=(x2, y2), xytext=(x1, y1),
+        arrowprops=dict(arrowstyle="->", color=color, lw=lw, linestyle=style,
+                        connectionstyle="arc3,rad=0.0", shrinkA=4, shrinkB=4),
+    )
+
+
+def _draw_lane(ax, y, h, label, color, x=0.3, width=15.5):
+    lane = FancyBboxPatch(
+        (x, y), width, h, boxstyle="round,pad=0.02,rounding_size=0.15",
+        facecolor=color, edgecolor="none", alpha=0.35,
+    )
+    ax.add_patch(lane)
+    ax.text(x + 0.15, y + h - 0.25, label, fontsize=9, fontweight="bold", color=DARK, va="top")
+
+
+def diagram_pipeline_schematic() -> None:
+    """Detailed schematic of the full OTA search data pipeline."""
+    fig, ax = plt.subplots(figsize=(18, 14))
+    fig.patch.set_facecolor(BG)
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 14)
+    ax.axis("off")
+    ax.set_title(
+        "OTA Search Data Pipeline — Schematic Overview",
+        fontsize=18, fontweight="bold", color=DARK, pad=18,
+    )
+
+    # Swim lanes (bottom to top)
+    _draw_lane(ax, 0.4, 2.2, "SERVE", "#E8F5E9", width=11.2)
+    _draw_lane(ax, 2.8, 2.4, "TRANSFORM  (batch · 15 min)", "#F3E5F5", width=11.2)
+    _draw_lane(ax, 5.4, 2.6, "STORAGE  (medallion)", "#FFF8E1", width=11.2)
+    _draw_lane(ax, 8.2, 2.6, "STREAM  (speed · seconds)", "#E3F2FD", width=11.2)
+    _draw_lane(ax, 11.0, 2.4, "INGEST", "#FFF3E0", width=11.2)
+
+    # Ops column
+    ops_lane = FancyBboxPatch(
+        (11.8, 0.4), 3.8, 13.0, boxstyle="round,pad=0.06,rounding_size=0.15",
+        facecolor=GREY_LIGHT, edgecolor=GREY, linewidth=1.5, alpha=0.5,
+    )
+    ax.add_patch(ops_lane)
+    ax.text(13.7, 13.1, "PLATFORM & GOVERNANCE", ha="center", fontsize=10, fontweight="bold", color=DARK)
+
+    # --- INGEST lane ---
+    _draw_box(ax, 0.6, 11.3, 1.5, 0.9, "OTA\nPartner", "#FFF3E0", "#E65100", fontsize=8)
+    _draw_box(ax, 2.4, 11.3, 1.4, 0.9, "Cloud Load\nBalancer", GREY_LIGHT, GREY, fontsize=7)
+    _draw_box(ax, 4.1, 11.15, 1.7, 1.2, "Ingestion API\nFastAPI · Cloud Run", "#E3F2FD", BLUE, fontsize=7)
+    _draw_box(ax, 6.1, 11.35, 1.5, 0.85, "JSON Schema\n+ Python", "#FFEBEE", RED, fontsize=7)
+    _draw_box(ax, 7.9, 11.3, 1.4, 0.9, "202 / 400\n/ 429", "#E8F5E9", GREEN, fontsize=7)
+
+    _draw_arrow(ax, 2.1, 11.75, 2.4, 11.75)
+    _draw_arrow(ax, 3.8, 11.75, 4.1, 11.75)
+    _draw_arrow(ax, 5.8, 11.75, 6.1, 11.75, color=RED)
+    _draw_arrow(ax, 7.6, 11.75, 7.9, 11.75, color=GREEN)
+
+    ax.text(5.0, 12.55, "POST /v1/searches  ·  ~100 req/s  ·  ~1 KB JSON", fontsize=8, color=GREY, ha="center")
+
+    # --- STREAM lane ---
+    _draw_box(ax, 4.5, 8.55, 1.8, 1.0, "Pub/Sub\nota-searches", "#E8F5E9", GREEN, fontsize=8)
+    _draw_box(ax, 6.7, 8.45, 2.0, 1.2, "Dataflow\nBeam Python SDK", "#E3F2FD", BLUE, fontsize=8)
+    _draw_box(ax, 9.1, 8.65, 1.3, 0.85, "dedup_key\nevent_id", GREY_LIGHT, GREY, fontsize=7)
+
+    _draw_arrow(ax, 5.5, 11.15, 5.5, 9.55)
+    _draw_arrow(ax, 6.3, 9.05, 6.7, 9.05)
+    _draw_arrow(ax, 8.7, 9.05, 9.1, 9.05)
+
+    # DLQ branch
+    _draw_box(ax, 6.9, 6.0, 1.6, 0.75, "DLQ / Quarantine", "#FFEBEE", RED, fontsize=7)
+    _draw_arrow(ax, 7.7, 8.45, 7.7, 6.75, color=RED, style="--")
+    ax.text(8.3, 7.5, "invalid", fontsize=7, color=RED, style="italic")
+
+    # --- STORAGE lane ---
+    _draw_box(ax, 1.0, 5.75, 2.2, 1.1, "BRONZE\nraw_ota_searches\n(JSON · partitioned)", "#CD7F32", "#8B5A2B", fontsize=7)
+    _draw_box(ax, 3.6, 5.75, 2.2, 1.1, "SILVER\nsearches_enriched\n(deduped · typed)", "#C0C0C0", GREY, fontsize=7)
+    _draw_box(ax, 6.2, 5.75, 2.4, 1.1, "GOLD\n3 trend tables\n(pre-aggregated)", "#FFD700", "#B8860B", fontsize=7)
+    _draw_box(ax, 9.0, 5.85, 1.6, 0.9, "GCS\nraw archive", "#FFF8E1", "#F9A825", fontsize=7)
+
+    _draw_arrow(ax, 7.7, 8.45, 2.1, 6.85)
+    _draw_arrow(ax, 7.7, 8.45, 9.8, 6.75, style="--")
+    _draw_arrow(ax, 3.2, 6.3, 3.6, 6.3)
+    _draw_arrow(ax, 5.8, 6.3, 6.2, 6.3)
+
+    ax.text(5.0, 5.35, "BigQuery EU  ·  bronze TTL 90 days", fontsize=8, color=GREY, ha="center")
+
+    # --- TRANSFORM lane ---
+    _draw_box(ax, 1.2, 3.05, 2.0, 1.0, "Airflow\nComposer", "#F3E5F5", "#7B1FA2", fontsize=8)
+    _draw_box(ax, 3.5, 3.05, 1.8, 1.0, "dbt\nSilver", "#F3E5F5", "#7B1FA2", fontsize=8)
+    _draw_box(ax, 5.6, 3.05, 1.8, 1.0, "dbt\nGold", "#F3E5F5", "#7B1FA2", fontsize=8)
+    _draw_box(ax, 7.7, 3.05, 1.6, 1.0, "dbt\nTests", "#F3E5F5", "#7B1FA2", fontsize=8)
+    _draw_box(ax, 9.5, 3.05, 1.5, 1.0, "Soda\nScan", "#E8F5E9", GREEN, fontsize=8)
+
+    _draw_arrow(ax, 3.2, 5.75, 3.2, 4.05)
+    _draw_arrow(ax, 2.2, 3.55, 3.5, 3.55)
+    _draw_arrow(ax, 5.3, 3.55, 5.6, 3.55)
+    _draw_arrow(ax, 7.4, 3.55, 7.7, 3.55)
+    _draw_arrow(ax, 9.3, 3.55, 9.5, 3.55)
+    _draw_arrow(ax, 4.4, 4.05, 4.7, 5.75, style="--", lw=1.2)
+    _draw_arrow(ax, 6.5, 4.05, 7.4, 5.75, style="--", lw=1.2)
+
+    # --- SERVE lane ---
+    _draw_box(ax, 2.5, 0.75, 2.5, 1.2, "Market Insight API\nGKE · existing product", "#E8F5E9", GREEN, fontsize=8)
+    _draw_box(ax, 5.5, 0.85, 2.0, 1.0, "Arrival date\ntrends", "#E3F2FD", BLUE, fontsize=7)
+    _draw_box(ax, 7.8, 0.85, 2.0, 1.0, "Country\ntrends", "#E3F2FD", BLUE, fontsize=7)
+    _draw_box(ax, 10.1, 0.85, 1.8, 1.0, "LOS\ndistribution", "#E3F2FD", BLUE, fontsize=7)
+
+    _draw_arrow(ax, 7.4, 5.75, 3.75, 1.95)
+    _draw_arrow(ax, 4.5, 1.35, 5.5, 1.35)
+    _draw_arrow(ax, 6.5, 1.35, 7.8, 1.35)
+    _draw_arrow(ax, 8.8, 1.35, 10.1, 1.35)
+
+    ax.text(6.0, 0.45, "Per-city aggregates only  ·  no PII exposed", fontsize=8, color=GREY, ha="center")
+
+    # --- OPS column boxes ---
+    ops_items = [
+        (12.1, 11.5, "Terraform\nGCS state"),
+        (12.1, 10.0, "GitLab CI\nplan · test · deploy"),
+        (12.1, 8.5, "Cloud Monitoring\nGrafana SLIs"),
+        (12.1, 7.0, "Atlan\nlineage · catalog"),
+        (12.1, 5.5, "Secret Manager\nAPI keys"),
+        (12.1, 4.0, "Schema registry\nv1 · v2"),
+    ]
+    for x, y, label in ops_items:
+        _draw_box(ax, x, y, 3.2, 1.1, label, "white", GREY, fontsize=7)
+
+    # Legend
+    legend_y = 0.55
+    legend_items = [
+        (0.6, "Data flow", GREY, "-"),
+        (3.0, "Validation / reject", RED, "--"),
+        (6.0, "Medallion write", "#B8860B", "-"),
+    ]
+    for x, label, color, _ in legend_items:
+        ax.plot([x, x + 0.6], [legend_y, legend_y], color=color, lw=2)
+        ax.text(x + 0.75, legend_y, label, fontsize=8, color=GREY, va="center")
+
+    _save(fig, "14_pipeline_schematic.png")
+
+
 def main() -> None:
     print(f"Generating presentation assets -> {ASSETS}")
     chart_arrival_date_popularity()
@@ -398,6 +548,7 @@ def main() -> None:
     chart_throughput_volume()
     image_sample_json()
     diagram_orchestration_dag()
+    diagram_pipeline_schematic()
     print(f"Done — {len(list(ASSETS.glob('*.png')))} images in presentation/assets/")
 
 

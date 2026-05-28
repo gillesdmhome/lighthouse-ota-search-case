@@ -14,6 +14,8 @@ Lighthouse partners with an online travel agency (OTA) that sends hotel search e
 
 ## High-level architecture
 
+![Pipeline schematic](../presentation/assets/14_pipeline_schematic.png)
+
 ```mermaid
 flowchart LR
   subgraph ingest [Ingestion]
