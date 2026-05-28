@@ -2,6 +2,8 @@
 
 **Duration:** 30 minutes | **Format:** Import into Google Slides or PowerPoint
 
+Visual assets: [`presentation/assets/`](assets/) — 13 PNG charts and diagrams (regenerate with `python scripts/generate_presentation_assets.py`)
+
 ---
 
 ## Slide 1: Title
@@ -11,6 +13,8 @@
 Design for Market Insight — Lighthouse Data Engineer Case
 
 Gilles | [Date]
+
+![Architecture overview](assets/01_architecture_overview.png)
 
 ---
 
@@ -26,9 +30,13 @@ Gilles | [Date]
 
 **Goal:** Receive → Store → Expose trend data to the product
 
+![Market Insight dashboard mockup](assets/02_market_insight_dashboard.png)
+
 ---
 
 ## Slide 3: Requirements & Constraints
+
+![Throughput and volume](assets/11_throughput_volume.png)
 
 | Constraint | Value |
 |---|---|
@@ -57,12 +65,7 @@ Full list: `docs/assumptions.md`
 
 ## Slide 5: Architecture Overview
 
-```
-OTA Partner → Load Balancer → FastAPI (Cloud Run)
-  → Pub/Sub → Dataflow (Beam Python) → BigQuery bronze + GCS
-  → Airflow + dbt → silver → gold
-  → Market Insight API (GKE)
-```
+![Architecture overview](assets/01_architecture_overview.png)
 
 **Lighthouse stack:** GCP, Pub/Sub, BigQuery, Dataflow, Airflow, dbt, Soda, Atlan, Terraform, GitLab CI
 
@@ -71,6 +74,8 @@ See full diagram: `docs/architecture.md`
 ---
 
 ## Slide 6: Ingestion Layer
+
+![Sample JSON payload](assets/12_sample_json_payload.png)
 
 **FastAPI on Cloud Run**
 
@@ -97,6 +102,8 @@ Latency: events land in bronze within **seconds**
 ---
 
 ## Slide 8: Data Model — Medallion
+
+![Medallion layers](assets/06_medallion_layers.png)
 
 | Layer | Table | Purpose |
 |---|---|---|
@@ -127,6 +134,12 @@ Tests: `unique(dedup_key)`, `not_null(city)`, `accepted_values(los_bucket)`
 
 Three models map 1:1 to Market Insight dashboard:
 
+![Arrival date popularity](assets/03_arrival_date_popularity.png)
+
+![Country trends](assets/04_country_trends.png)
+
+![LOS distribution](assets/05_los_distribution.png)
+
 | Model | Chart | Metrics |
 |---|---|---|
 | `gold_arrival_date_popularity` | Search level (time series) | search_count by arrival_date |
@@ -138,6 +151,8 @@ Pre-aggregated → dashboard queries scan ~5 GB, not 260 GB
 ---
 
 ## Slide 11: Validation Strategy (3 Layers)
+
+![Validation layers](assets/07_validation_layers.png)
 
 | Layer | Tool | When |
 |---|---|---|
@@ -153,13 +168,11 @@ Code: `validation/validate_search_event.py`
 
 ## Slide 12: Orchestration
 
+![Airflow DAG](assets/13_orchestration_dag.png)
+
 **Airflow (Composer) + Astronomer Cosmos**
 
 DAG schedule: every 15 minutes
-
-```
-check_dataflow_health → dbt silver → dbt gold → dbt test → soda scan → expire partitions
-```
 
 MVP alternative: Cloud Scheduler + Cloud Run (~$300/mo cheaper)
 
@@ -183,6 +196,8 @@ infra/environments/{dev, staging, prod}
 ---
 
 ## Slide 14: Cost Estimate
+
+![Cost breakdown](assets/08_cost_breakdown.png)
 
 | Component | USD/mo |
 |---|---|
@@ -214,6 +229,8 @@ Details: `docs/cost_estimate.md`
 
 ## Slide 16: MVP Phasing
 
+![MVP phasing](assets/09_mvp_phasing.png)
+
 | Phase | Scope | Cost | Timeline |
 |---|---|---|---|
 | **1 — MVP** | FastAPI → Pub/Sub → GCS → BQ → dbt → Market Insight | ~$200–400/mo | 2–4 weeks |
@@ -225,6 +242,8 @@ Details: `docs/cost_estimate.md`
 ---
 
 ## Slide 17: Lambda-Inspired Layering
+
+![Lambda layers](assets/10_lambda_layers.png)
 
 | Layer | Component | Latency |
 |---|---|---|
@@ -269,4 +288,5 @@ Repository: all code, docs, and diagrams included
 - `validation/` — runnable Python validator + tests
 - `dbt/` — warehouse models
 - `infra/` — Terraform modules
+- `presentation/assets/` — charts and diagrams
 - `docs/interview_qa.md` — Q&A preparation
