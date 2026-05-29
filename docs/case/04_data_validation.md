@@ -97,6 +97,8 @@ def is_valid(payload: dict) -> bool:
 | `price` > 0 for each room | `search_results[0].price: must be positive` |
 | `currency` in allowed set | `search_results[0].currency: unsupported currency 'XYZ'` |
 
+**LOS convention:** `length_of_stay` is the number of **nights**, not inclusive calendar days. For `2022-03-01` → `2022-03-05`, the partner sends `4` (nights on Mar 1–4; Mar 5 is checkout). Counting Mar 1 through Mar 5 inclusive would be 5 — that is not the partner's definition. Validation uses `(departure_date − arrival_date).days`.
+
 ### Known countries (MVP)
 
 Belgium, Brazil, France, Germany, Netherlands, Spain, Switzerland, United Kingdom, United States/USA.

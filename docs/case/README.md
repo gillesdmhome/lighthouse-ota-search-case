@@ -12,4 +12,4 @@ Detailed breakdown of each requirement from the Lighthouse Data Engineer technic
 | 6 | Monthly cost estimate and reduction strategies | [06_monthly_cost_estimate.md](06_monthly_cost_estimate.md) |
 | 7 | Data quality, governance, privacy, performance, error handling | [07_operational_considerations.md](07_operational_considerations.md) |
 
-Supporting documents: [assumptions.md](assumptions.md) · [interview_qa.md](interview_qa.md)
+Supporting documents: [bronze_silver_gold.md](bronze_silver_gold.md) · [assumptions.md](../assumptions.md) · [interview_qa.md](../interview_qa.md)

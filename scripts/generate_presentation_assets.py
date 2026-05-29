@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import shutil
 import textwrap
 from pathlib import Path
 
@@ -531,6 +532,10 @@ def diagram_pipeline_schematic() -> None:
         ax.text(x + 0.75, legend_y, label, fontsize=8, color=GREY, va="center")
 
     _save(fig, "14_pipeline_schematic.png")
+
+    docs_assets = ROOT / "docs" / "assets"
+    docs_assets.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ASSETS / "14_pipeline_schematic.png", docs_assets / "pipeline_schematic.png")
 
 
 def main() -> None:
